@@ -1,40 +1,662 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
   <link rel="icon" href="data:,">
-  <title>Printing...</title>
+  <title>Surprise...</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: #f0f0f0; }
-    #icon { font-size: 70px; margin-bottom: 20px; }
-    #status { font-size: 26px; font-weight: bold; color: #222; }
-    #sub { font-size: 15px; color: #888; margin-top: 10px; }
-    .spinner { margin: 24px auto; width: 52px; height: 52px; border: 6px solid #ddd; border-top-color: #444; border-radius: 50%; animation: spin 0.85s linear infinite; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      min-height: 100dvh; overflow: hidden;
+      background: #0a0a1a;
+      color: #e0e0f0;
+    }
+
+    /* ── Animated gradient background ── */
+    .bg-anim {
+      position: fixed; inset: 0; z-index: 0;
+      background: linear-gradient(135deg, #0a0a2e, #1a0a2e, #0a1a2e, #0a0a2e);
+      background-size: 400% 400%;
+      animation: gradShift 8s ease infinite;
+    }
+    @keyframes gradShift {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* ── Floating particles ── */
+    .particles {
+      position: fixed; inset: 0; z-index: 1; pointer-events: none; overflow: hidden;
+    }
+    .particle {
+      position: absolute; border-radius: 50%;
+      background: radial-gradient(circle, rgba(120,80,255,0.6), transparent 70%);
+      animation: floatUp linear infinite;
+      opacity: 0;
+    }
+    @keyframes floatUp {
+      0%   { transform: translateY(100vh) scale(0); opacity: 0; }
+      10%  { opacity: 1; }
+      90%  { opacity: 1; }
+      100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+    }
+
+    /* ── Main container ── */
+    .container {
+      position: relative; z-index: 10;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; padding: 2rem;
+      width: 100%; max-width: 500px;
+    }
+
+    /* ── Phase panels ── */
+    .phase { display: none; flex-direction: column; align-items: center; width: 100%; }
+    .phase.active { display: flex; animation: fadeIn 0.6s ease-out; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px) scale(0.95); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* ── Phase 1: Generating ── */
+    .magic-icon {
+      font-size: 80px;
+      animation: pulse3d 2s ease-in-out infinite;
+      filter: drop-shadow(0 0 30px rgba(139,92,246,0.5));
+    }
+    @keyframes pulse3d {
+      0%, 100% { transform: scale(1) rotateY(0deg); }
+      25%  { transform: scale(1.1) rotateY(10deg); }
+      50%  { transform: scale(1.05) rotateY(0deg); }
+      75%  { transform: scale(1.1) rotateY(-10deg); }
+    }
+
+    .gen-title {
+      font-size: 1.6rem; font-weight: 800; margin-top: 1.5rem;
+      background: linear-gradient(90deg, #a78bfa, #818cf8, #c084fc, #a78bfa);
+      background-size: 200%;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: shimmer 2s linear infinite;
+    }
+    @keyframes shimmer { to { background-position: 200% center; } }
+
+    .gen-dots::after {
+      content: ''; animation: dots 1.5s steps(4, end) infinite;
+    }
+    @keyframes dots {
+      0%  { content: ''; }
+      25% { content: '.'; }
+      50% { content: '..'; }
+      75% { content: '...'; }
+    }
+
+    .gen-sub {
+      font-size: 0.85rem; color: #7c7ca0; margin-top: 0.75rem;
+    }
+
+    /* ── Orbiting rings ── */
+    .orbit-container {
+      position: relative; width: 160px; height: 160px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .orbit-ring {
+      position: absolute; border: 2px solid transparent; border-radius: 50%;
+      border-top-color: rgba(139,92,246,0.5);
+      border-right-color: rgba(99,102,241,0.3);
+    }
+    .orbit-ring:nth-child(1) {
+      width: 140px; height: 140px;
+      animation: spin 3s linear infinite;
+    }
+    .orbit-ring:nth-child(2) {
+      width: 120px; height: 120px;
+      animation: spin 2s linear infinite reverse;
+      border-top-color: rgba(192,132,252,0.5);
+    }
+    .orbit-ring:nth-child(3) {
+      width: 100px; height: 100px;
+      animation: spin 4s linear infinite;
+      border-top-color: rgba(129,140,248,0.4);
+    }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Progress bar (phase 1) ── */
+    .progress-wrap {
+      width: 80%; max-width: 300px; height: 4px; background: rgba(255,255,255,0.08);
+      border-radius: 99px; margin-top: 2rem; overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%; width: 0%; border-radius: 99px;
+      background: linear-gradient(90deg, #7c3aed, #a78bfa, #c084fc);
+      transition: width 0.3s linear;
+    }
+
+    /* ── Phase 2: Countdown ── */
+    .countdown-ring-wrap {
+      position: relative; width: 200px; height: 200px;
+    }
+    .countdown-ring-wrap svg { transform: rotate(-90deg); }
+    .countdown-bg { fill: none; stroke: rgba(255,255,255,0.06); stroke-width: 6; }
+    .countdown-fg {
+      fill: none; stroke: url(#countGrad); stroke-width: 6;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 1s linear;
+    }
+    .countdown-num {
+      position: absolute; inset: 0; display: flex; align-items: center;
+      justify-content: center; font-size: 3.5rem; font-weight: 900;
+      font-variant-numeric: tabular-nums;
+      color: #e0e0ff;
+      text-shadow: 0 0 30px rgba(139,92,246,0.4);
+    }
+    .countdown-label {
+      font-size: 0.7rem; color: #8888aa; text-transform: uppercase;
+      letter-spacing: 0.15em; margin-top: 0.5rem;
+    }
+
+    .stay-title {
+      font-size: 1.35rem; font-weight: 700; margin-top: 1.5rem; color: #c4b5fd;
+    }
+    .stay-sub {
+      font-size: 0.8rem; color: #6b6b90; margin-top: 0.5rem; max-width: 280px;
+      line-height: 1.5;
+    }
+
+    /* ── Motion warning overlay ── */
+    .motion-warn {
+      position: fixed; inset: 0; z-index: 1000;
+      display: none; flex-direction: column; align-items: center; justify-content: center;
+      background: rgba(10, 0, 0, 0.92);
+      backdrop-filter: blur(10px);
+      animation: warnFlash 0.6s ease;
+    }
+    .motion-warn.show { display: flex; }
+    @keyframes warnFlash {
+      0%   { opacity: 0; }
+      30%  { opacity: 1; }
+    }
+    .warn-icon { font-size: 80px; animation: shake 0.4s ease infinite; }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25%  { transform: translateX(-8px) rotate(-2deg); }
+      75%  { transform: translateX(8px) rotate(2deg); }
+    }
+    .warn-title {
+      font-size: 1.8rem; font-weight: 900; color: #ef4444; margin-top: 1rem;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      text-shadow: 0 0 40px rgba(239,68,68,0.5);
+    }
+    .warn-sub {
+      font-size: 1rem; color: #fca5a5; margin-top: 0.5rem;
+    }
+    .warn-border {
+      position: absolute; inset: 0; pointer-events: none;
+      border: 4px solid #ef4444;
+      animation: borderPulse 0.8s ease-in-out infinite;
+    }
+    @keyframes borderPulse {
+      0%, 100% { border-color: rgba(239,68,68,0.3); box-shadow: inset 0 0 40px rgba(239,68,68,0); }
+      50%  { border-color: rgba(239,68,68,0.9); box-shadow: inset 0 0 80px rgba(239,68,68,0.15); }
+    }
+
+    /* ── Phase 3: Complete ── */
+    .done-icon {
+      font-size: 90px;
+      animation: popIn 0.6s cubic-bezier(0.175,0.885,0.32,1.275);
+      filter: drop-shadow(0 0 30px rgba(34,197,94,0.4));
+    }
+    @keyframes popIn {
+      0%   { transform: scale(0) rotate(-20deg); opacity: 0; }
+      60%  { transform: scale(1.2) rotate(5deg); }
+      100% { transform: scale(1) rotate(0); opacity: 1; }
+    }
+    .done-title {
+      font-size: 1.5rem; font-weight: 800; margin-top: 1rem;
+      color: #86efac;
+    }
+    .done-sub { font-size: 0.85rem; color: #6b7280; margin-top: 0.5rem; }
+
+    /* ── Confetti ── */
+    .confetti-wrap { position: fixed; inset: 0; z-index: 50; pointer-events: none; overflow: hidden; }
+    .confetti-piece {
+      position: absolute; top: -20px; width: 10px; height: 10px;
+      animation: confettiFall linear forwards;
+      opacity: 0.9;
+    }
+    @keyframes confettiFall {
+      0%   { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+      100% { transform: translateY(110vh) rotate(720deg) scale(0.3); opacity: 0; }
+    }
   </style>
 </head>
 <body>
-  <div id="icon">🖨️</div>
-  <div id="status">Sending to Printer...</div>
-  <div class="spinner" id="spinner"></div>
-  <div id="sub">Please wait a moment</div>
+  <!-- Background -->
+  <div class="bg-anim"></div>
+  <div class="particles" id="particles"></div>
+
+  <!-- Motion Warning Overlay -->
+  <div class="motion-warn" id="motionWarn">
+    <div class="warn-border"></div>
+    <div class="warn-icon">🚫</div>
+    <div class="warn-title">Don't Move!</div>
+    <div class="warn-sub">Go back and stay still.</div>
+  </div>
+
+  <!-- Confetti container -->
+  <div class="confetti-wrap" id="confettiWrap"></div>
+
+  <div class="container">
+
+    <!-- PHASE 1: Generating -->
+    <div class="phase active" id="phase1">
+      <div class="orbit-container">
+        <div class="orbit-ring"></div>
+        <div class="orbit-ring"></div>
+        <div class="orbit-ring"></div>
+        <div class="magic-icon">✨</div>
+      </div>
+      <div class="gen-title">Generating Your Surprise<span class="gen-dots"></span></div>
+      <div class="gen-sub">Hang tight, something special is on its way</div>
+      <div class="progress-wrap"><div class="progress-fill" id="genProgress"></div></div>
+    </div>
+
+    <!-- PHASE 2: Countdown -->
+    <div class="phase" id="phase2">
+      <div class="countdown-ring-wrap">
+        <svg width="200" height="200" viewBox="0 0 200 200">
+          <defs>
+            <linearGradient id="countGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#7c3aed"/>
+              <stop offset="100%" stop-color="#06b6d4"/>
+            </linearGradient>
+          </defs>
+          <circle class="countdown-bg" cx="100" cy="100" r="90"/>
+          <circle class="countdown-fg" id="countdownArc" cx="100" cy="100" r="90"
+                  stroke-dasharray="565.49" stroke-dashoffset="0"/>
+        </svg>
+        <div class="countdown-num" id="countdownNum">60</div>
+      </div>
+      <div class="countdown-label">seconds remaining</div>
+      <div class="stay-title" id="stayTitle">🧍 Stay Where You Are</div>
+      <div class="stay-sub">Don't walk away — your surprise depends on it!<br>Just stay still for a moment.</div>
+    </div>
+
+    <!-- PHASE 3: Done -->
+    <div class="phase" id="phase3">
+      <div class="done-icon">🎉</div>
+      <div class="done-title">All Done!</div>
+      <div class="done-sub">Closing in a moment...</div>
+    </div>
+  </div>
+
   <script>
-    fetch('/api/print', { method: 'POST' })
-      .then(res => res.json())
-      .then(() => {
-        document.getElementById('spinner').style.display = 'none';
-        document.getElementById('icon').innerText = '✅';
-        document.getElementById('status').innerText = 'Sent to Printer!';
-        document.getElementById('sub').innerText = 'Your card is printing now.';
-      })
-      .catch(() => {
-        document.getElementById('spinner').style.display = 'none';
-        document.getElementById('icon').innerText = '❌';
-        document.getElementById('status').innerText = 'Something went wrong.';
-        document.getElementById('sub').innerText = 'Please try again.';
+    // ===========================================================
+    // PARTICLES
+    // ===========================================================
+    (function spawnParticles() {
+      const c = document.getElementById('particles');
+      for (let i = 0; i < 30; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        const size = 4 + Math.random() * 12;
+        p.style.width = size + 'px';
+        p.style.height = size + 'px';
+        p.style.left = Math.random() * 100 + '%';
+        p.style.animationDuration = (6 + Math.random() * 10) + 's';
+        p.style.animationDelay = (Math.random() * 8) + 's';
+        c.appendChild(p);
+      }
+    })();
+
+    // ===========================================================
+    // STEP DETECTOR (inline, no UI — background only)
+    // ===========================================================
+    class StepDetector {
+      constructor() {
+        this.MIN_STEP_MS = 280; this.MAX_STEP_MS = 1200;
+        this.CONFIRM_STEPS = 2; this.WALK_TIMEOUT = 2000; this.STOP_GRACE = 800;
+        this.MIN_PULSE_MS = 55; this.MAX_PULSE_MS = 400;
+        this.MIN_PEAK_ACCEL = 0.7; this.MAX_STEP_ACCEL = 12;
+        this.THRESH_K = 1.0; this.BASELINE_WINDOW = 180;
+        this.lpAlpha = 0.3; this.lpVal = 0;
+        this.hpAlpha = 0.004; this.hpVal = 0; this.filtered = 0;
+        this.aboveThresh = false; this.pulseStartTime = 0; this.pulsePeak = 0;
+        this.lastStepTime = 0; this.totalSteps = 0; this.consecutiveSteps = 0;
+        this.recentIntervals = []; this.state = 'IDLE';
+        this._walkTimer = null; this._stopTimer = null;
+        this.magHistory = [];
+      }
+      process(rawMag, ts) {
+        this.lpVal = this.lpAlpha * rawMag + (1 - this.lpAlpha) * this.lpVal;
+        this.hpVal = this.hpAlpha * this.lpVal + (1 - this.hpAlpha) * this.hpVal;
+        this.filtered = this.lpVal - this.hpVal;
+        this.magHistory.push(this.filtered);
+        if (this.magHistory.length > this.BASELINE_WINDOW) this.magHistory.shift();
+        const thresh = this._calcThreshold();
+        this._detectPulse(ts, thresh);
+        return this.state;
+      }
+      _calcThreshold() {
+        const h = this.magHistory;
+        if (h.length < 20) return this.MIN_PEAK_ACCEL;
+        const mean = h.reduce((a, b) => a + b, 0) / h.length;
+        const vari = h.reduce((s, v) => s + (v - mean) ** 2, 0) / h.length;
+        return Math.max(this.MIN_PEAK_ACCEL, mean + this.THRESH_K * Math.sqrt(vari));
+      }
+      _detectPulse(ts, thresh) {
+        const v = this.filtered;
+        if (!this.aboveThresh && v > thresh) {
+          this.aboveThresh = true; this.pulseStartTime = ts; this.pulsePeak = v;
+        } else if (this.aboveThresh && v > this.pulsePeak) {
+          this.pulsePeak = v;
+        } else if (this.aboveThresh && v < thresh * 0.55) {
+          this.aboveThresh = false;
+          const pulseMs = ts - this.pulseStartTime;
+          const valid = pulseMs >= this.MIN_PULSE_MS && pulseMs <= this.MAX_PULSE_MS
+                     && this.pulsePeak <= this.MAX_STEP_ACCEL;
+          if (valid) this._onValidStep(ts);
+        }
+      }
+      _onValidStep(ts) {
+        const interval = ts - this.lastStepTime;
+        if (this.lastStepTime === 0) {
+          this.lastStepTime = ts; this.totalSteps++; this.consecutiveSteps = 1;
+          this.state = 'POSSIBLE'; return;
+        }
+        if (interval < this.MIN_STEP_MS) return;
+        if (interval > this.MAX_STEP_MS) {
+          this.consecutiveSteps = 1; this.recentIntervals = []; this.state = 'POSSIBLE';
+        } else {
+          this.consecutiveSteps++;
+          this.recentIntervals.push(interval);
+          if (this.recentIntervals.length > 12) this.recentIntervals.shift();
+        }
+        this.lastStepTime = ts; this.totalSteps++; this._evaluateState();
+      }
+      _evaluateState() {
+        if (this.consecutiveSteps >= this.CONFIRM_STEPS) {
+          this.state = 'WALKING'; this._resetWalkTimeout();
+        } else if (this.consecutiveSteps >= 1 && this.state !== 'WALKING') {
+          this.state = 'POSSIBLE';
+        } else { this._resetWalkTimeout(); }
+      }
+      _resetWalkTimeout() {
+        clearTimeout(this._walkTimer); clearTimeout(this._stopTimer);
+        this._walkTimer = setTimeout(() => {
+          this.state = 'STOPPING';
+          this._stopTimer = setTimeout(() => {
+            if (this.state === 'STOPPING') {
+              this.state = 'IDLE'; this.consecutiveSteps = 0; this.recentIntervals = [];
+            }
+          }, this.STOP_GRACE);
+        }, this.WALK_TIMEOUT);
+      }
+    }
+
+    // ===========================================================
+    // MADGWICK AHRS (fallback when no hardware linear accel)
+    // ===========================================================
+    class MadgwickAHRS {
+      constructor(hz = 60, beta = 0.15) {
+        this.hz = hz; this.beta = beta;
+        this.q0 = 1; this.q1 = 0; this.q2 = 0; this.q3 = 0;
+      }
+      update(gx, gy, gz, ax, ay, az) {
+        const r = 0.0174533; gx *= r; gy *= r; gz *= r;
+        let d1 = 0.5*(-this.q1*gx - this.q2*gy - this.q3*gz);
+        let d2 = 0.5*(this.q0*gx + this.q2*gz - this.q3*gy);
+        let d3 = 0.5*(this.q0*gy - this.q1*gz + this.q3*gx);
+        let d4 = 0.5*(this.q0*gz + this.q1*gy - this.q2*gx);
+        if (!(ax===0&&ay===0&&az===0)) {
+          let rn=1/Math.sqrt(ax*ax+ay*ay+az*az);ax*=rn;ay*=rn;az*=rn;
+          const _2q0=2*this.q0,_2q1=2*this.q1,_2q2=2*this.q2,_2q3=2*this.q3;
+          const _4q0=4*this.q0,_4q1=4*this.q1,_4q2=4*this.q2;
+          const _8q1=8*this.q1,_8q2=8*this.q2;
+          const qq0=this.q0**2,qq1=this.q1**2,qq2=this.q2**2,qq3=this.q3**2;
+          let s0=_4q0*qq2+_2q2*ax+_4q0*qq1-_2q1*ay;
+          let s1=_4q1*qq3-_2q3*ax+4*qq0*this.q1-_2q0*ay-_4q1+_8q1*qq1+_8q1*qq2+_4q1*az;
+          let s2=4*qq0*this.q2+_2q0*ax+_4q2*qq3-_2q3*ay-_4q2+_8q2*qq1+_8q2*qq2+_4q2*az;
+          let s3=4*qq1*this.q3-_2q1*ax+4*qq2*this.q3-_2q2*ay;
+          rn=1/Math.sqrt(s0*s0+s1*s1+s2*s2+s3*s3);
+          s0*=rn;s1*=rn;s2*=rn;s3*=rn;
+          d1-=this.beta*s0;d2-=this.beta*s1;d3-=this.beta*s2;d4-=this.beta*s3;
+        }
+        const dt=1/this.hz;
+        this.q0+=d1*dt;this.q1+=d2*dt;this.q2+=d3*dt;this.q3+=d4*dt;
+        const n=1/Math.sqrt(this.q0**2+this.q1**2+this.q2**2+this.q3**2);
+        this.q0*=n;this.q1*=n;this.q2*=n;this.q3*=n;
+      }
+      gravity() {
+        return {
+          x: 2*(this.q1*this.q3-this.q0*this.q2),
+          y: 2*(this.q0*this.q1+this.q2*this.q3),
+          z: this.q0**2-this.q1**2-this.q2**2+this.q3**2
+        };
+      }
+    }
+
+    // ===========================================================
+    // APP
+    // ===========================================================
+    const det      = new StepDetector();
+    const madgwick = new MadgwickAHRS(60, 0.15);
+    let hwLinear   = false;
+    let ticks      = 0;
+    let lastHz     = performance.now();
+    let sensorHz   = 60;
+
+    let motionActive = false;   // only warn during phase 2
+    let warnVisible  = false;
+    let warnTimeout  = null;
+    let sensorStarted = false;
+
+    const warnEl = document.getElementById('motionWarn');
+
+    // ── Sensor handler ──
+    function onMotion(e) {
+      const now = performance.now();
+      ticks++;
+      if (now - lastHz > 1000) { sensorHz = ticks; ticks = 0; lastHz = now; madgwick.hz = sensorHz || 60; }
+
+      let lx, ly, lz;
+      const lin = e.acceleration;
+      const raw = e.accelerationIncludingGravity;
+      const rot = e.rotationRate;
+
+      if (lin && lin.x !== null && lin.y !== null && lin.z !== null) {
+        lx = lin.x; ly = lin.y; lz = lin.z; hwLinear = true;
+      } else if (raw && raw.x !== null) {
+        madgwick.update(rot?.beta||0, rot?.gamma||0, rot?.alpha||0, raw.x, raw.y, raw.z);
+        const g = madgwick.gravity();
+        lx = raw.x - g.x*9.81; ly = raw.y - g.y*9.81; lz = raw.z - g.z*9.81;
+      } else return;
+
+      const mag   = Math.sqrt(lx*lx + ly*ly + lz*lz);
+      const state = det.process(mag, now);
+
+      if (!motionActive) return;
+
+      if (state === 'WALKING') {
+        showWarning();
+      }
+    }
+
+    function showWarning() {
+      if (warnVisible) return;
+      warnVisible = true;
+      warnEl.classList.add('show');
+      // Vibrate if available
+      if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+      clearTimeout(warnTimeout);
+      warnTimeout = setTimeout(hideWarning, 3000);
+    }
+
+    function hideWarning() {
+      warnVisible = false;
+      warnEl.classList.remove('show');
+    }
+
+    // Continuously hide/show based on live state
+    setInterval(() => {
+      if (!motionActive) return;
+      if (det.state === 'WALKING') {
+        showWarning();
+      } else if (det.state === 'IDLE' && warnVisible) {
+        hideWarning();
+      }
+    }, 300);
+
+    // ── Request sensor permission & start ──
+    async function startSensors() {
+      if (sensorStarted) return;
+      try {
+        if (typeof DeviceMotionEvent !== 'undefined'
+            && typeof DeviceMotionEvent.requestPermission === 'function') {
+          const p = await DeviceMotionEvent.requestPermission();
+          if (p !== 'granted') return;
+        }
+        window.addEventListener('devicemotion', onMotion);
+        sensorStarted = true;
+      } catch (_) { /* silent — desktop fallback */ }
+    }
+
+    // ===========================================================
+    // CONFETTI
+    // ===========================================================
+    function fireConfetti(count = 60) {
+      const wrap = document.getElementById('confettiWrap');
+      const colors = ['#7c3aed','#a78bfa','#c084fc','#38bdf8','#22c55e','#facc15','#f472b6','#ef4444'];
+      for (let i = 0; i < count; i++) {
+        const el = document.createElement('div');
+        el.className = 'confetti-piece';
+        el.style.left = Math.random()*100 + '%';
+        el.style.background = colors[Math.floor(Math.random()*colors.length)];
+        el.style.width  = (6 + Math.random()*8) + 'px';
+        el.style.height = (6 + Math.random()*8) + 'px';
+        el.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+        el.style.animationDuration = (2 + Math.random()*3) + 's';
+        el.style.animationDelay = (Math.random()*0.8) + 's';
+        wrap.appendChild(el);
+        setTimeout(() => el.remove(), 5000);
+      }
+    }
+
+    // ===========================================================
+    // FLOW CONTROLLER
+    // ===========================================================
+    const CIRC = 2 * Math.PI * 90; // circumference of countdown ring
+
+    function showPhase(id) {
+      document.querySelectorAll('.phase').forEach(p => p.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+
+    async function run() {
+      // ── Auto-request sensors at very start (user gesture not always needed on Android) ──
+      startSensors();
+
+      // ──────────────────────────
+      //  PHASE 1 — Generating (5s)
+      // ──────────────────────────
+      showPhase('phase1');
+      const bar = document.getElementById('genProgress');
+
+      // Also call the print API in background (kept from original)
+      fetch('/api/print', { method: 'POST' }).catch(() => {});
+
+      await new Promise(resolve => {
+        let elapsed = 0;
+        const iv = setInterval(() => {
+          elapsed += 100;
+          bar.style.width = Math.min(100, (elapsed / 5000) * 100) + '%';
+          if (elapsed >= 5000) { clearInterval(iv); resolve(); }
+        }, 100);
       });
+
+      // ──────────────────────────
+      //  PHASE 2 — Countdown (60s)
+      // ──────────────────────────
+      showPhase('phase2');
+      motionActive = true;  // start monitoring movement
+
+      // One more attempt to start sensors (in case phase1 was too early)
+      startSensors();
+
+      const arc   = document.getElementById('countdownArc');
+      const numEl = document.getElementById('countdownNum');
+      let remaining = 60;
+
+      arc.style.strokeDasharray  = CIRC;
+      arc.style.strokeDashoffset = '0';
+
+      await new Promise(resolve => {
+        const iv = setInterval(() => {
+          remaining--;
+          numEl.textContent = remaining;
+          arc.style.strokeDashoffset = (CIRC * (1 - remaining / 60)).toFixed(2);
+
+          if (remaining <= 10) {
+            numEl.style.color = '#f87171';
+          }
+          if (remaining <= 0) { clearInterval(iv); resolve(); }
+        }, 1000);
+      });
+
+      motionActive = false;
+      hideWarning();
+
+      // ──────────────────────────
+      //  PHASE 3 — Done (3s then close)
+      // ──────────────────────────
+      showPhase('phase3');
+      fireConfetti(80);
+
+      await new Promise(r => setTimeout(r, 3000));
+
+      // Attempt to close
+      window.close();
+      // Fallback: blank the page
+      setTimeout(() => { document.body.innerHTML = ''; document.title = ''; window.location.href = 'about:blank'; }, 500);
+    }
+
+    // ── Kick off ──
+    // Need a user gesture on iOS for sensors, so if we're on a phone
+    // show a tap-to-start if needed, otherwise auto-run
+    (function init() {
+      const needsGesture = typeof DeviceMotionEvent !== 'undefined'
+                        && typeof DeviceMotionEvent.requestPermission === 'function';
+
+      if (needsGesture) {
+        // iOS: overlay a "Tap to begin" button for the required user gesture
+        const overlay = document.createElement('div');
+        overlay.style.cssText = `
+          position:fixed;inset:0;z-index:9999;display:flex;align-items:center;
+          justify-content:center;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);
+          cursor:pointer;
+        `;
+        overlay.innerHTML = `
+          <div style="text-align:center;">
+            <div style="font-size:60px;margin-bottom:16px;">🎁</div>
+            <div style="font-size:1.4rem;font-weight:800;color:#c4b5fd;">Tap to Begin</div>
+            <div style="font-size:0.8rem;color:#7c7ca0;margin-top:8px;">Your surprise is ready</div>
+          </div>
+        `;
+        document.body.appendChild(overlay);
+        overlay.addEventListener('click', async () => {
+          await startSensors();
+          overlay.remove();
+          run();
+        }, { once: true });
+      } else {
+        run();
+      }
+    })();
   </script>
 </body>
 </html>
